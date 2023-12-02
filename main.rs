@@ -8,35 +8,7 @@
     L language                 - mandatory
 
 
- Translation Directory Structure
-
- rosetta_stone             <------- Top dir is called rosetta_stone
-   pt                      <------- Group same languages in same folder
-       pt.nu
-       pt_pt.nu
-       pt_br.nu
-   es.nu                   <------- Single language files can be left without a dir
-   en              
-       en_us.UTF-8.nu      <-x-x-x- DO NOT include encoding in language file names
-       en_us.nu  
-       en_uk    
-           en_uk.nu  
-           en_uk@foul.nu   <------- Grouping same languages in same folder applies to modifiers too
-       en_in.nu  
-     
-
- Language File Structure
-
-en: {               # <------ language layer
-    us: {           # <------ country layer (default value is xx)
-        blank: {    # <------ modifier layer (deault value is "blank")
-            # This 
-            what-language: "This system speaks American English."
-    
-        }
-    }
-}
-*/
+ 
 
 
 
