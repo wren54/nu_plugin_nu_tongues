@@ -7,19 +7,6 @@
     |   L country              - optional
     L language                 - mandatory
 
-
-
- Language File Structure
-
-en: {               # <------ language layer
-    us: {           # <------ country layer (default value is xx)
-        blank: {    # <------ modifier layer (deault value is "blank")
-            # This
-            what-language: "This system speaks American English."
-
-        }
-    }
-}
 */
 
 use lazy_static::lazy_static;
