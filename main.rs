@@ -7,9 +7,15 @@
     |   L country              - optional
     L language                 - mandatory
 
+
+
+ Language File Structure
+
+todo
 */
 
 use lazy_static::lazy_static;
+use nu_ansi_term::*;
 use nu_plugin::{serve_plugin, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin};
 use nu_protocol::{
     PluginSignature, Signature, SyntaxShape, SyntaxShape::Any as SyntaxShapeAny, Type,
@@ -21,6 +27,7 @@ use std::env;
 use std::fmt::{Display, Formatter, Result as FormatResult};
 use std::fs::{read_dir, read_to_string, File};
 use toml::{Table as TomlTable, Value as TomlValue};
+
 const LOCALE_LANG: &str = "LANG";
 
 struct Translate;
@@ -63,6 +70,12 @@ impl Plugin for Translate {
         let posix_lang: PosixLanguage =
             PosixLanguage::new(posix_lang_string).expect("$LANG was not in POSIX format");
 
+        let mut path = input
+            .as_string()
+            .expect("input of translation was not String");
+        if !path.ends_with("/") {
+            path += "/";
+        }
         //call.nth(0) returns the 1st positional parameter of translate command.
         //as per the .required function in signature, it is guaranteed to exist and be a String
         //Then pass it to the MessageKey object constructor
@@ -74,14 +87,10 @@ impl Plugin for Translate {
         );
         //takes in the dir input and searches all files in it for best translation file matching the user
         //reads it to String
-        let language_file_string: String = read_to_string(
-            posix_lang.get_best_file(
-                input
-                    .as_string()
-                    .expect("input of translation was not String"),
-            ),
-        )
-        .expect("failed to find any suitable translation file at path input");
+        let best_file_path: String = posix_lang.get_best_file_path(path);
+
+        let language_file_string: String = read_to_string(&best_file_path)
+            .expect(format!("failed to open file at path {}", &best_file_path).as_str());
         //generates the translation from that file, reading the whole file
         //optimiztion here possibly
         let language_toml: LanguageToml = toml::from_str(language_file_string.as_str()).unwrap();
@@ -111,6 +120,17 @@ impl Plugin for Translate {
                 result = result.replace(parens, val.as_string().unwrap().as_str());
             }
         }
+        result = result.trim_start_matches('"').to_string();
+        result = result.trim_end_matches('"').to_string();
+        //Color Processing
+        /*
+        let red_string = "red part";
+        let green_string = "green part";
+
+        let ansi_strings: AnsiStrings<'_> = AnsiStrings(&[Red.paint(red_string), Green.paint(green_string)]);
+
+        */
+
         /*let msg_key_string = format!("{}", MessageKey::new(call.nth(0).map_or(  "error1".to_string() , |val| val.as_string().unwrap_or("error2".to_string()))));
         let posix_string = format!("{}", PosixLanguage::new(posix_lang.unwrap()).unwrap().to_string());
         let output = posix_string + &msg_key_string + &language_toml.language + &language_toml.territory + &language_toml.modifier + &all_messages;
@@ -202,11 +222,12 @@ impl PosixLanguage {
         file_names
     }
 
-    fn get_best_file(&self, path: String) -> String {
+    fn get_best_file_path(&self, path: String) -> String {
         let four_best = self.four_best_file_names();
 
         for name in four_best.iter() {
-            for option in read_dir(&path).unwrap() {
+            for option in read_dir(&path).expect(format!("there was no dir at {}", &path).as_str())
+            {
                 let dir = option.unwrap();
                 if dir.file_type().unwrap().is_file() {
                     if dir.file_name() == name.as_str() {
@@ -278,6 +299,15 @@ impl Display for MessageKey {
         write!(f, "{}", output)
     }
 }
+/*
+impl CustomValue for AnsiStrings {
+    fn value_string(&self) -> String {
+        "AnsiStrings".to_string()
+    }
+    fn clone_value(&self, span: Span) -> Value {
+
+    }
+}*/
 
 fn main() {
     serve_plugin(&mut Translate::new(), MsgPackSerializer);
