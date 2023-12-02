@@ -1,0 +1,28 @@
+language = "en"
+territory = "xx"
+modifier = "blank"
+
+[messages]
+# |'--- best practice involves a non-translated comment of the message's purpose
+# v
+# Says what language you are speaking.
+what_language = "This system speaks Global English."
+
+# Repeats whatever was said, with an added onemonopia of a parrot
+parrot = "($phrase), Squak!"
+
+# Messages that communicate the weather
+[messages.weather]  # <---- message bundle (for organization purposes)
+# |'--- this command is accessed by weather.raining
+# v
+# Advises user to grab umbrella because of rain today
+raining = "Pack your umbrella, there are showers headed your way!"
+
+# Advises user to pack sunscreen because of the sun today
+sunny = "Get your sunscreen, the sun is pouring down all day today!"
+
+# Makes reference to the video game Silent Hill while announcing fog
+foggy = "Drive carefully and yell for Cheryl, the fog is intense in this silent town."
+
+# Reports humidity    
+humidity = "The humidity is ($percent)% today!"

@@ -1,0 +1,28 @@
+language = "en"
+territory = "uk"
+modifier = "blank"
+
+[messages]
+# |'--- best practice involves a non-translated comment of the message's purpose
+# v
+# Says what language you are speaking.
+what_language = "This system speaks UK English."
+
+# Repeats whatever was said, with an added onemonopia of a parrot
+parrot = "($phrase), Craaaww!"
+
+# Messages that communicate the weather
+[messages.weather]  # <---- message bundle (for organization purposes)
+# |'--- this command is accessed by weather.raining
+# v
+# Advises user to grab umbrella because of rain today
+raining = "Grab ya brolly, its gonna rain today!"
+
+# Advises user to pack sunscreen because of the sun today
+sunny = "You're not gonna believe this, but its actually not rainy or cloudy today. Do you even own sunscreen?"
+
+# Makes reference to the video game Silent Hill while announcing fog
+foggy = "Cant see anything today because of the smog. Its like that game with Harry Mason."
+
+# Reports humidity    
+humidity = "The humidity is ($percent)% today! Gov'na!"
