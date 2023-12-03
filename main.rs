@@ -15,6 +15,7 @@ todo
 */
 
 use lazy_static::lazy_static;
+use nu_ansi_term::Color::{Fixed, Rgb};
 use nu_ansi_term::*;
 use nu_plugin::{serve_plugin, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin};
 use nu_protocol::{
@@ -109,7 +110,7 @@ impl Plugin for Translate {
         }
 
         //gets the string out
-        let mut result = toml_value.to_string();
+        let mut result: String = toml_value.to_string();
 
         //variable processing in our string
         let option = call.nth(1);
@@ -120,8 +121,12 @@ impl Plugin for Translate {
                 result = result.replace(parens, val.as_string().unwrap().as_str());
             }
         }
+
         result = result.trim_start_matches('"').to_string();
         result = result.trim_end_matches('"').to_string();
+        let ansi_result = ansify_string(&result);
+        //ansi formatting
+
         //Color Processing
         /*
         let red_string = "red part";
@@ -136,7 +141,7 @@ impl Plugin for Translate {
         let output = posix_string + &msg_key_string + &language_toml.language + &language_toml.territory + &language_toml.modifier + &all_messages;
 
         Ok(NuValue::string(output, input.span()))*/
-        Ok(NuValue::string(result, input.span()))
+        Ok(NuValue::string(ansi_result, input.span()))
     }
 }
 
@@ -308,6 +313,87 @@ impl CustomValue for AnsiStrings {
 
     }
 }*/
+
+fn base_10_str_to_u8(string: &str) -> u8 {
+    u8::from_str_radix(string, 10)
+        .expect("string that was expected to be a u8 was formatted incorrectly")
+}
+
+fn ansify_string<'a>(input_string: &'a String) -> String {
+    let input_string_split: Vec<&str> = input_string.split("(ansi ").collect();
+    let mut ansi_result =
+        Vec::<AnsiGenericString<'static, str>>::with_capacity(input_string_split.len());
+    for i in 0..input_string_split.len() {
+        ansi_result.push(if i == 0 {
+            Color::Default.paint(input_string_split[i])
+        } else {
+            let seperate_command_from_rest: Vec<&str> =
+                input_string_split[i].splitn(2, ")").collect();
+            let command = seperate_command_from_rest[0];
+            let the_rest = seperate_command_from_rest[1];
+
+            let mut style = Style::new();
+
+            if command.contains("bold") {
+                style = style.bold()
+            }
+            if command.contains("dimmed") {
+                style = style.dimmed()
+            }
+            if command.contains("italic") {
+                style = style.italic()
+            }
+            if command.contains("underline") {
+                style = style.underline()
+            }
+            if command.contains("strikethrough") {
+                style = style.strikethrough()
+            }
+            if command.contains("color") {
+                let mut counter = 0 ;
+                for (i, match_word) in command.match_indices("color") {
+                    let mut color_args = command
+                        .get((i + 6)..(command.match_indices(']').collect::<Vec<(usize,&str)>>()[counter].0))
+                        .unwrap()
+                        .trim_end_matches(']')
+                        .trim_start_matches('[');
+                    let is_foreground: bool = !color_args.starts_with("bg");
+
+                    color_args = color_args.trim_start_matches("bg;");
+                    color_args = color_args.trim_start_matches("fg;");
+
+                    let color_args_split: Vec<&str> = color_args.split(";").collect();
+
+                    let color = if color_args_split.len() < 3 {
+                        //Color::Fixed
+                        Fixed(base_10_str_to_u8(color_args_split[0]))
+                    } else {
+                        Rgb(
+                            base_10_str_to_u8(color_args_split[0]),
+                            base_10_str_to_u8(color_args_split[1]),
+                            base_10_str_to_u8(color_args_split[2]),
+                        )
+                    };
+
+                    if is_foreground {
+                        style = style.fg(color);
+                    } else {
+                        style = style.on(color);
+                    }
+                    counter += 1;
+                }
+            }
+            if command.contains("reverse") {
+                style = style.reverse()
+            }
+
+            style.paint(the_rest)
+        });
+    }
+
+    let ansi_strings_copy: AnsiStrings<'a> = AnsiGenericStrings(ansi_result.leak());
+    format!("{}", ansi_strings_copy)
+}
 
 fn main() {
     serve_plugin(&mut Translate::new(), MsgPackSerializer);
