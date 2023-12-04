@@ -1,5 +1,5 @@
 [package]
-name = "nu_plugin_nu_tongues"
+name = "nu_plugin_nu-tongues"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,3 +13,4 @@ lazy_static = "*"
 toml = "*"
 serde = "*"
 nu-ansi-term = "*"
+

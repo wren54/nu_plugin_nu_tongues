@@ -19,14 +19,14 @@ use nu_ansi_term::Color::{Fixed, Rgb};
 use nu_ansi_term::*;
 use nu_plugin::{serve_plugin, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin};
 use nu_protocol::{
-    PluginSignature, Signature, SyntaxShape, SyntaxShape::Any as SyntaxShapeAny, Type,
+    PluginSignature,  SyntaxShape, Type,
     Value as NuValue,
 };
 use regex::Regex;
 use serde::Deserialize;
 use std::env;
 use std::fmt::{Display, Formatter, Result as FormatResult};
-use std::fs::{read_dir, read_to_string, File};
+use std::fs::{read_dir, read_to_string};
 use toml::{Table as TomlTable, Value as TomlValue};
 
 const LOCALE_LANG: &str = "LANG";
@@ -146,12 +146,14 @@ impl Plugin for Translate {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct LanguageToml {
     language: String,
     territory: String,
     modifier: String,
     messages: TomlTable,
 }
+
 
 struct PosixLanguage {
     language: String,
@@ -175,22 +177,22 @@ impl PosixLanguage {
             language: (&captures["language"]).to_string(),
             territory: (&captures)
                 .name("territory")
-                .map_or("_xx", |m| m.as_str())
+                .map_or("_xx", |m| &m.as_str())
                 .strip_prefix("_")
                 .unwrap()
-                .to_string(),
+                .to_lowercase(),
             encoding: (&captures)
                 .name("encoding")
-                .map_or(".blank", |m| m.as_str())
+                .map_or(".blank", |m| &m.as_str())
                 .strip_prefix(".")
                 .unwrap()
-                .to_string(),
+                .to_lowercase(),
             modifier: (&captures)
                 .name("modifier")
-                .map_or("@blank", |m| m.as_str())
+                .map_or("@blank", |m| &m.as_str())
                 .strip_prefix("@")
                 .unwrap()
-                .to_string(),
+                .to_lowercase(),
         })
     }
 
@@ -355,7 +357,7 @@ fn ansify_string<'a>(input_string: &'a String) -> String {
             if command.contains("blink") {
                 style = style.blink()
             }
-
+            
             style = ansi_compute_and_add_color(command, &style);
 
             if command.contains("reverse") {
@@ -374,7 +376,7 @@ fn ansi_compute_and_add_color(command: &str, style: &Style) -> Style {
     let mut result = style.clone();
     if command.contains("color") {
         let mut counter = 0;
-        for (i, match_word) in command.match_indices("color") {
+        for (i, _match_word) in command.match_indices("color") {
             let mut color_args = command
                 .get(
                     (i + 6)
